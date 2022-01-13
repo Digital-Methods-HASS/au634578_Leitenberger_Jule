@@ -1,0 +1,168 @@
+---
+title: "The time of refugees in Denmark"
+author: "Jule Leitenberger"
+date: "19 10 2021"
+output: html_document
+---
+
+__Denmark's immigration law__
+
+ 2015 many people decided to flee their country of origin and went on long journeys to European countries. In 2021, the year 2015 gets described as the year of the refugees crisis that hit Europe. Those refugees also made their way to Denmark. The hundreds and thousand of people that came to Denmark, made the Danish government vote for a change of the Danish immigration law. The law change implemented that residence permits for asylum seekers only should be on a temporary basis. The danish government agreed that every person that applies for a residence permit, will only get a temporary permit to stay. The change included, that the Danish state got the power to decide, when they refugees must leave Denmark, because the Denmark decides when a country is "safe". The required annual application, for the extension of the temporary residence permit, will get rejected as soon as the country gets declared as "safe". The information can be found in the following article: https://www.bbc.com/news/world-europe-57156835
+
+**Focus of this project**
+
+This project examines the amount of refugees that arrived in the European Union in 2014,2015, 2019 and 2020. In comparison will I look at the amount of asylum application that Denmark received. Furtheron will I show the amount of rejections of temporary residence permits made by the Danish authorities. Which is interesting because Denmark as the only European country in 2019 decided, that Syria is safe again, even though that Bashar al-Assad, who people fled from, still is the leader of the country (https://www.bbc.com/news/world-europe-57156835). My goal is therefore to make the data sets more visible, by using codes for visualisation, because refugees are more than just numbers, they are humans like you and I. 
+
+
+I will start with loading of packages I need for the analysis. 
+
+```{r}
+library(tidyverse)
+library(googleVis)
+library(gapminder)
+library(dplyr)
+library(readxl)
+```
+
+To give an overview over the refugee situation in Europe I will use the data from Eurostat, the statistical office of the European Union, which last was updated it 19/07/2021 and can be found in the following URL:https://ec.europa.eu/eurostat/web/main/data/database. These data are supplied to Eurostat by the national Ministries of Interior and related official agencies. Data is presented by country and for groups of countries: the European Member States and the European Free Trade Association (EFTA).
+
+Data has been rounded to the nearest 5.
+
+```{r}
+asylum_applications <- read_csv("migr_asyappctza_2_Data.csv")
+view(asylum_applications)
+```
+In the next code chunk, I will filter the data based on the years 2014,2015,2019 and the GEO European Union - 28 countries. In 2019 the Brexit happened, that is why for the year 2020, I will use the GEO European Union - 27 countries.
+
+```{r}
+filter(asylum_applications, TIME =="2014" | TIME =="2015" | TIME =="2019" | TIME =="2020",
+       GEO == "European Union - 28 countries (2013-2020)" )
+```
+
+```{r}
+filter(asylum_applications, TIME =="2020",
+         GEO == "European Union - 27 countries (from 2020)" )
+```
+
+
+The following code will examine the Danish values in the Eurostat data set.
+
+```{r}
+filter(asylum_applications, TIME =="2014" | TIME =="2015" | TIME =="2019" | TIME == "2020",
+       GEO == "Denmark")
+```
+
+
+**Denmark's Data**
+
+I used the data from the following webpage: https://www.nyidanmark.dk/da/Tal-og-statistik/Tal-og-fakta. Since all the information is open accessible but saved in PDF, and I didn't know another way of transforming it, I transformed the daya by hand into an .csv-file. I am going to start with the data of about refugees who entered the country and received a temporary residency.
+
+```{r}
+residence_DK <- read_csv ("Migr_data_DK_comma.csv")
+```
+The data set of the residency_Dk will I transform to make it more tidy. 
+
+```{r}
+str(residence_DK)
+unique(residence_DK)
+head("Value")
+```
+
+
+The next data set is from from the same webpage, but has information about the amoung of residence permits that got rejected. The data set starts in 2017.
+
+```{r}
+rejection_2017 <- read_csv("Nyidk_inddrar_2017.csv")
+```
+
+```{r}
+str(rejection_2017)
+unique(rejection_2017)
+head("year")
+```
+
+In 2021, the danish ministry for foreign affairs changed the way of publishing data. That is why I will load an extra data set for the ongoing year 2021. The data set contains information about the monthly amount of residence permits rejections. Since I cannot visualize in the same way as the other data sets, I will only summarize the amount of rejections in 2021.
+
+```{r}
+rejection_2021 <- read_csv("2021_afg_ind_num.csv")
+sum(rejection_2021$n)
+```
+
+__The Visualization__
+
+**Maps of residence permits**
+
+In order to make a distinction between the years and to exclude the value "summarized", I created objects, before creating the maps.
+
+```{r}
+residence_2015 <- filter(residence_DK, TIME == "2015",
+                         Value > "10783",
+                         ASYL_APP == "Refugee")  
+View(residence_2015)
+```
+
+
+```{r}
+temp_res_2015 <- filter(residence_DK, TIME == "2015",
+                        Value > "10783",
+                        ASYL_APP == "temporary residency")
+View(temp_res_2015)
+```
+
+Residence permits in 2015.
+
+```{r}
+Geo=gvisGeoChart(residence_2015, locationvar = "GEO",
+                 colorvar="Value")
+plot(Geo)
+```
+Temporal residence permits in 2015.
+
+```{r}
+Geo=gvisGeoChart(temp_res_2015, locationvar = "GEO",
+                 colorvar="Value")
+plot(Geo)
+```
+Residence permits in 2020
+```{r}
+residence_2020 <- filter(residence_DK, TIME == "2020",
+                         Value < "120",
+                         ASYL_APP == "temporary residency")
+view(residence_2020)
+```
+
+```{r}
+Geo=gvisGeoChart(residence_2020, locationvar = "GEO",
+                 colorvar="Value")
+plot(Geo)
+```
+**The Rejections**
+
+Rejections in 2019
+
+```{r}
+rejection_2019 <- filter(rejection_2017, YEAR == "2019",
+                      ASYLUM_APP > 1)
+view(rejection_2019)
+```
+
+
+```{r}
+Geo=gvisGeoChart(rejection_2019, locationvar = "COUNTRY",
+                 colorvar="ASYLUM_APP")
+plot(Geo)
+```
+
+Rejections in 2020
+
+```{r}
+rejection_2020 <- filter(rejection_2017, YEAR == "2020",
+                      ASYLUM_APP > 1)
+view(rejection_2020)
+```
+
+```{r}
+Geo=gvisGeoChart(rejection_2020, locationvar = "COUNTRY",
+                 colorvar="ASYLUM_APP")
+plot(Geo)
+```
